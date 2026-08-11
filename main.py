@@ -1,5 +1,6 @@
 import base64
 import random
+import re
 
 from astrbot.api import logger
 from astrbot.api.event import filter
@@ -14,6 +15,9 @@ from .core.emotion import EmotionJudger
 from .core.entry import EntryManager
 from .core.local_data import LocalDataManager
 from .core.service import GPTSoVITSService
+
+# 匹配 AI 回复中的 <gsv>...</gsv> 块，块内文本将转为语音发送
+_GSV_TAG_RE = re.compile(r"<gsv>(.*?)</gsv>", re.DOTALL | re.IGNORECASE)
 
 
 class GPTSoVITSPlugin(Star):
@@ -80,8 +84,6 @@ class GPTSoVITSPlugin(Star):
             return
         if cfg.only_llm_result and not result.is_llm_result():
             return
-        if random.random() > cfg.tts_prob:
-            return
 
         # 收集所有Plain文本片段
         plain_texts = []
@@ -95,6 +97,28 @@ class GPTSoVITSPlugin(Star):
 
         # 合并所有Plain文本
         combined_text = "\n".join(plain_texts)
+
+        # 提取 <gsv> 块：块内文本转为语音发送，原回复删除 <gsv> 标签后作为纯文本继续发送
+        gsv_texts = _GSV_TAG_RE.findall(combined_text)
+        if gsv_texts:
+            cleaned_text = _GSV_TAG_RE.sub("", combined_text).strip()
+            records = []
+            for gsv_text in gsv_texts:
+                params = await self._get_emotion_params(event, gsv_text)
+                res = await self.service.inference(gsv_text, extra_params=params)
+                if not bool(res):
+                    return
+                records.append(self._to_record(res))
+
+            chain.clear()
+            if cleaned_text:
+                chain.append(Plain(cleaned_text))
+            chain.extend(records)
+            return
+
+        # 原有的概率自动转语音逻辑
+        if random.random() > cfg.tts_prob:
+            return
 
         # 仅允许一定长度以下的文本通过
         if len(combined_text) > cfg.max_msg_len:
