@@ -49,7 +49,8 @@ class GPTSoVITSPlugin(Star):
         if not res.data:
             raise ValueError("无法获取结果数据")
 
-        b64 = base64.urlsafe_b64encode(res.data).decode()
+        # AstrBot 使用标准 base64 解码（base64.b64decode），urlsafe 编码中的 -/_ 会被丢弃导致音频损坏
+        b64 = base64.b64encode(res.data).decode()
         return Record.fromBase64(b64)
 
 
