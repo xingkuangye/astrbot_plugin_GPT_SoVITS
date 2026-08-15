@@ -62,6 +62,9 @@ class GPTSoVITSService:
                 file_path=str(cache_path),
             )
 
+        # 每次 TTS 请求前先切换到配置指定的模型，防止 GSV 当前加载了其他模型
+        await self.load_model()
+
         logger.debug(f"向 GSV 发起 TTS 请求，参数: {params}")
         result = await self.client.tts(params)
 
