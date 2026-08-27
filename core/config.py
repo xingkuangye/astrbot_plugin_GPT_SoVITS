@@ -120,11 +120,6 @@ class ClientConfig(ConfigNode):
     timeout: int
 
 
-class ModelConfig(ConfigNode):
-    gpt_path: str
-    sovits_path: str
-
-
 class JudgeConfig(ConfigNode):
     enabled_llm: bool
     provider_id: str
@@ -140,7 +135,6 @@ class PluginConfig(ConfigNode):
     enabled: bool
     auto: AutoConfig
     client: ClientConfig
-    model: ModelConfig
     default_params: dict[str, Any]
     judge: JudgeConfig
     cache: CacheConfig
@@ -155,8 +149,6 @@ class PluginConfig(ConfigNode):
         self.data_dir = StarTools.get_data_dir(self._plugin_name)
         self.plugin_dir = Path(get_astrbot_plugin_path()) / self._plugin_name
 
-        self.model.gpt_path = self.normalize_path(self.model.gpt_path)
-        self.model.sovits_path = self.normalize_path(self.model.sovits_path)
         self.default_params["ref_audio_path"] = self.normalize_path(
             self.default_params["ref_audio_path"]
         )

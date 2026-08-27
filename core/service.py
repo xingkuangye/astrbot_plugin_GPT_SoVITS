@@ -2,44 +2,28 @@ from typing import Any
 
 from astrbot.api import logger
 
-from .client import GSVApiClient, GSVRequestResult
+from .client import IndexTTSApiClient, TTSRequestResult
 from .config import PluginConfig
 from .local_data import LocalDataManager
 
 
-class GPTSoVITSService:
+class TTSService:
     def __init__(
         self,
         config: PluginConfig,
-        client: GSVApiClient,
+        client: IndexTTSApiClient,
         local_data: LocalDataManager,
     ):
-        self.cfg = config.model
         self.default_params = config.default_params
         self.client = client
         self.local_data = local_data
-
-    async def load_model(self):
-        if self.cfg.gpt_path:
-            result = await self.client.set_gpt_weights(self.cfg.gpt_path)
-            if result.ok:
-                logger.info(f"GPT 模型已加载: {self.cfg.gpt_path}")
-            else:
-                logger.error(f"GPT 模型加载失败: {result.error}")
-
-        if self.cfg.sovits_path:
-            result = await self.client.set_sovits_weights(self.cfg.sovits_path)
-            if result.ok:
-                logger.info(f"SoVITS 模型已加载: {self.cfg.sovits_path}")
-            else:
-                logger.error(f"SoVITS 模型加载失败: {result.error}")
 
     async def inference(
         self,
         text: str,
         extra_params: dict[str, Any] | None = None,
-    ) -> GSVRequestResult:
-        """TTS 推理"""
+    ) -> TTSRequestResult:
+        """TTS 推理（Index-TTS）"""
         params = self.default_params.copy()
         if text:
             params["text"] = text
@@ -55,17 +39,14 @@ class GPTSoVITSService:
         if cached_audio:
             cache_path, cached_data = cached_audio
             logger.debug("命中缓存，跳过 TTS 请求")
-            return GSVRequestResult(
+            return TTSRequestResult(
                 ok=True,
                 data=cached_data,
                 text=str(params.get("text", "")),
                 file_path=str(cache_path),
             )
 
-        # 每次 TTS 请求前先切换到配置指定的模型，防止 GSV 当前加载了其他模型
-        await self.load_model()
-
-        logger.debug(f"向 GSV 发起 TTS 请求，参数: {params}")
+        logger.debug(f"向 Index-TTS 发起请求，参数: {params}")
         result = await self.client.tts(params)
 
         if bool(result):
@@ -76,8 +57,3 @@ class GPTSoVITSService:
             logger.error(f"TTS 推理失败: {result.error}")
 
         return result
-
-    async def restart(self):
-        result = await self.client.restart()
-        if not result.ok:
-            logger.error(f"重启失败: {result.error}")

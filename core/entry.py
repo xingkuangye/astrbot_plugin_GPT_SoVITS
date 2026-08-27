@@ -14,23 +14,26 @@ class EmotionEntry(ConfigNode):
     name: str
     keywords: list[str]
     ref_audio_path: str
-    prompt_text: str
-    prompt_lang: str
-    speed_factor: float
-    fragment_interval: float
+    duration_factor: float
+    emo_control_method: int
+    emo_weight: float
 
     def __init__(self, data: dict[str, Any]):
         super().__init__(data)
         self.ref_audio_path = PluginConfig.normalize_path(self.ref_audio_path)
 
     def to_params(self) -> dict[str, Any]:
-        return {
-            "ref_audio_path": self.ref_audio_path,
-            "prompt_text": self.prompt_text,
-            "prompt_lang": self.prompt_lang,
-            "speed_factor": self.speed_factor,
-            "fragment_interval": self.fragment_interval,
-        }
+        out: dict[str, Any] = {}
+        for key in (
+            "ref_audio_path",
+            "duration_factor",
+            "emo_control_method",
+            "emo_weight",
+        ):
+            value = getattr(self, key, None)
+            if value not in (None, ""):
+                out[key] = value
+        return out
 
 
 class EntryManager:

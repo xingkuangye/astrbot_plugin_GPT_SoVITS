@@ -19,10 +19,9 @@
     - 轻轻
     - 悄悄
   ref_audio_path: data/plugins/astrbot_plugin_GPT_SoVITS/default_audio/不要害怕，也不要哭了.wav
-  prompt_text: 不要害怕，也不要哭了
-  prompt_lang: zh
-  speed_factor: 1
-  fragment_interval: 0.7
+  duration_factor: 1
+  emo_control_method: 0
+  emo_weight: 0.65
 
 - __template_key: default
   name: 开心
@@ -48,10 +47,9 @@
     - 加油
     - 奥利给
   ref_audio_path: data/plugins/astrbot_plugin_GPT_SoVITS/default_audio/它好像在等另一只蕈兽_心情很好的样子.wav
-  prompt_text: 它好像在等另一只蕈兽_心情很好的样子
-  prompt_lang: zh
-  speed_factor: 1.1
-  fragment_interval: 0.3
+  duration_factor: 0.9
+  emo_control_method: 0
+  emo_weight: 0.7
 
 - __template_key: default
   name: 生气
@@ -87,7 +85,6 @@
     - 杠精
     - 找茬
   ref_audio_path: data/plugins/astrbot_plugin_GPT_SoVITS/default_audio/你还会选择现在的位置吗？到那时，你觉得自己又会是什么呢.wav
-  prompt_text: 你还会选择现在的位置吗？到那时，你觉得自己又会是什么呢
-  prompt_lang: zh
-  speed_factor: 1.2
-  fragment_interval: 0.5
+  duration_factor: 0.85
+  emo_control_method: 0
+  emo_weight: 0.75

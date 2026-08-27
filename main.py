@@ -9,12 +9,12 @@ from astrbot.core import AstrBotConfig
 from astrbot.core.message.components import Plain, Record
 from astrbot.core.platform import AstrMessageEvent
 
-from .core.client import GSVApiClient, GSVRequestResult
+from .core.client import IndexTTSApiClient, TTSRequestResult
 from .core.config import PluginConfig
 from .core.emotion import EmotionJudger
 from .core.entry import EntryManager
 from .core.local_data import LocalDataManager
-from .core.service import GPTSoVITSService
+from .core.service import TTSService
 
 # 匹配 AI 回复中的 <gsv>...</gsv> 块，块内文本将转为语音发送
 _GSV_TAG_RE = re.compile(r"<gsv>(.*?)</gsv>", re.DOTALL | re.IGNORECASE)
@@ -26,19 +26,18 @@ class GPTSoVITSPlugin(Star):
         self.cfg = PluginConfig(config, context)
         self.local_data = LocalDataManager(self.cfg)
         self.entry_mgr = EntryManager(self.cfg)
-        self.client = GSVApiClient(self.cfg)
+        self.client = IndexTTSApiClient(self.cfg)
         self.judger = EmotionJudger(self.cfg)
-        self.service = GPTSoVITSService(self.cfg, self.client, self.local_data)
+        self.service = TTSService(self.cfg, self.client, self.local_data)
 
     async def initialize(self):
-        if self.cfg.enabled:
-            await self.service.load_model()
+        pass
 
     async def terminate(self):
         await self.client.close()
 
     @staticmethod
-    def _to_record(res: GSVRequestResult) -> Record:
+    def _to_record(res: TTSRequestResult) -> Record:
         if res.file_path:
             try:
                 return Record.fromFileSystem(res.file_path)
@@ -149,11 +148,13 @@ class GPTSoVITSPlugin(Star):
 
     @filter.command("重启GSV", alias={"重启gsv"})
     async def tts_control(self, event: AstrMessageEvent):
-        """重启GPT_SoVITS"""
+        """Index-TTS 由服务端管理，无需通过插件重启"""
         if not self.cfg.enabled:
             return
-        yield event.plain_result("重启TTS中...(报错信息请忽略，等待一会即可完成重启)")
-        await self.service.restart()
+        yield event.plain_result(
+            "当前使用 Index-TTS 服务，由服务端自行管理，无需通过插件重启；"
+            "如服务异常请检查服务端日志。"
+        )
 
     @filter.llm_tool()
     async def gsv_tts(self, event: AstrMessageEvent, message: str = ""):
